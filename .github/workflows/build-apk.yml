@@ -25,20 +25,15 @@ jobs:
           java-version: 17
       - name: Build
         if: env.READY == '1'
-        run: |
-          npm ci --no-audit --no-fund
-          npx cap add android
-          cp -r android-res/* android/app/src/main/res/
-          sed -i "s/versionCode 1$/versionCode ${{ github.run_number }}/" android/app/build.gradle
-          sed -i "s/versionName \"1.0\"/versionName \"1.${{ github.run_number }}\"/" android/app/build.gradle
-          npx cap sync android
-          mkdir -p ~/.android && cp ci/debug.keystore ~/.android/debug.keystore
-          cd android && chmod +x gradlew && ./gradlew assembleDebug --no-daemon
-          cp app/build/outputs/apk/debug/app-debug.apk ../SubtitleReader.apk
+        env:
+          RUN_NUMBER: ${{ github.run_number }}
+        run: bash ci/build.sh
       - uses: softprops/action-gh-release@v2
         if: env.READY == '1'
         with:
           tag_name: v1.${{ github.run_number }}
           name: Subtitle Reader 1.${{ github.run_number }}
-          files: SubtitleReader.apk
+          files: |
+            dist/SubtitleReader.apk
+            dist/SubtitleReader-2.apk
           make_latest: true
